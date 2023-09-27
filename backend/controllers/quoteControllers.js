@@ -1,4 +1,8 @@
 const getQuotes = (req,res) => {
+    if(!req.body.quote || !req.body.author){
+        res.status(400)
+        throw new Error('Please add all fields')
+    }
     res.status(200).json({message: 'get quotes'})
 }
 
