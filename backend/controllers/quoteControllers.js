@@ -14,7 +14,8 @@ const createQuotes = asyncHandler(async (req,res) => {
     }
     const quote = await Quote.create({
         author: req.body.author,
-        quote: req.body.quote
+        quote: req.body.quote,
+        user: req.body.id
     })
     res.status(200).json(quote)
 })

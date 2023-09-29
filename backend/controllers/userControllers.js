@@ -27,7 +27,8 @@ const userRegister = asyncHandler(async (req,res) => {
     const user = await User.create({
         username,
         email,
-        password: hashedPassword
+        password: hashedPassword,
+        token: generateToken(user.id)
     })
 
     if(user){
@@ -46,6 +47,26 @@ const userRegister = asyncHandler(async (req,res) => {
 // @route POST /api/users/login
 // @access Publlic
 const userLogin = asyncHandler(async (req,res) => {
+    const { email, password } = req.body
+
+    if(!email || !password){
+        res.status(400)
+        throw new Error('Please add all fields')
+    }
+
+    const user = await User.findOne({email})
+
+    if(user && (await bcrypt.compare(password, user.password))){
+        res.json({
+            _id: user.id,
+            username: user.username,
+            email: user.email,
+            token: generateToken(user._id)
+        })
+    }else{
+        res.status(400)
+        throw new Error('Invalid Credentials')
+    }
     res.status(200).json({message: 'User Login'})
 })
 
@@ -53,7 +74,12 @@ const userLogin = asyncHandler(async (req,res) => {
 // @route GET /api/users/me
 // @access Private
 const me = asyncHandler(async (req,res) => {
-    res.status(200).json({message: 'User Data'})
+    const { _id, email, username } = await User.findById(req.user.id)
+    res.status(200).json({
+        id: _id,
+        email,
+        username
+    })
 })
 
 // @desc Update user
@@ -69,6 +95,13 @@ const userUpdate = asyncHandler(async (req,res) => {
 const userDelete = asyncHandler(async (req,res) => {
     res.status(200).json({message: 'User Delete'})
 })
+
+// Generate JWT
+const generateToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+        expiresIn: '30d'
+    })
+}
 
 module.exports = {
     userRegister,
